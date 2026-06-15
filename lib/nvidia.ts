@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { createServerClient } from './supabase';
 
 export const DEFAULT_MODEL = 'meta/llama-3.1-70b-instruct';
-export const FALLBACK_KEY = process.env.NVIDIA_FALLBACK_KEY;
+export const FALLBACK_KEY = process.env.NVIDIA_FALLBACK_KEY ?? process.env.NVIDIA_API_KEY;
 
 export function getAIClient(apiKey: string) {
   return new OpenAI({

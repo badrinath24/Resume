@@ -3,7 +3,7 @@ export const maxDuration = 120;
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { getUserApiKey, FALLBACK_KEY } from '@/lib/nvidia';
+import { getUserApiKey, PARSE_KEY } from '@/lib/nvidia';
 import { getResumeParserPrompt } from '@/lib/prompts';
 
 export async function POST(req: NextRequest) {
@@ -29,13 +29,13 @@ export async function POST(req: NextRequest) {
   const warning = rawText.length < 200;
   const truncated = rawText.slice(0, 8000);
   const userKey = await getUserApiKey(userId);
-  const apiKey = userKey ?? FALLBACK_KEY ?? '';
+  const apiKey = userKey ?? PARSE_KEY;
 
   const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'qwen/qwen3-next-80b-a3b-instruct',
+      model: 'qwen/qwen3-next-80b-a3b-instruct',  // fast sparse MoE — best for extraction
       messages: [{ role: 'user', content: getResumeParserPrompt(truncated) }],
       temperature: 0.1,
       max_tokens: 2000,

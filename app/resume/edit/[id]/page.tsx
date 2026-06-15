@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { Resume, ResumeExperience, ResumeEducation, ResumeSkillGroup, ResumeCertification, ResumeLanguage } from '@/lib/types';
 
 const emptyExp = (): ResumeExperience => ({ company: '', title: '', startDate: '', endDate: '', location: '', bullets: [''] });
@@ -34,8 +35,11 @@ export default function EditResumePage() {
       if (!prev) return prev;
       const next = JSON.parse(JSON.stringify(prev));
       let obj: any = next;
-      for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-      obj[path[path.length - 1]] = value;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (obj[path[i]] === undefined || obj[path[i]] === null) obj[path[i]] = {};
+        obj = obj[path[i]];
+      }
+      if (obj !== undefined && obj !== null) obj[path[path.length - 1]] = value;
       return next;
     });
   }
@@ -63,6 +67,22 @@ export default function EditResumePage() {
           </button>
         </div>
         {saved && <p className="text-green-600 text-sm font-medium">Saved successfully!</p>}
+
+        {/* Action bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link href={`/applications/new?resumeId=${id}`} className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700">
+            🎯 Tailor for a Job
+          </Link>
+          <Link href={`/resume/${id}/ats`} className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white text-sm font-semibold rounded-xl hover:bg-purple-700">
+            📊 ATS Score
+          </Link>
+          <Link href={`/resume/${id}/cover-letter`} className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600">
+            ✉️ Cover Letter
+          </Link>
+          <a href={`/resume/${id}/download`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700">
+            ⬇️ Download PDF
+          </a>
+        </div>
 
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Personal Information</h2>

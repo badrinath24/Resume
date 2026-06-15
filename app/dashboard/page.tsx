@@ -1,174 +1,174 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 
-interface Application {
-  id: string;
-  job_title: string;
-  company: string;
-  ats_score: number;
-  status: string;
-  created_at: string;
-}
+const FEATURES = [
+  {
+    emoji: '📄',
+    title: 'Upload Resume',
+    desc: 'Parse your existing resume with AI and store it in your profile',
+    href: '/resume/new',
+    color: 'from-blue-500 to-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-100',
+  },
+  {
+    emoji: '🗂️',
+    title: 'My Resumes',
+    desc: 'View and edit all your uploaded and tailored resumes',
+    href: '/resumes',
+    color: 'from-violet-500 to-violet-600',
+    bg: 'bg-violet-50',
+    border: 'border-violet-100',
+  },
+  {
+    emoji: '🎯',
+    title: 'Tailor for a Job',
+    desc: 'Paste a job description and get an AI-tailored resume with ATS score',
+    href: '/resumes',
+    color: 'from-orange-500 to-orange-600',
+    bg: 'bg-orange-50',
+    border: 'border-orange-100',
+  },
+  {
+    emoji: '📊',
+    title: 'ATS Score',
+    desc: 'Check how well your resume matches any job description',
+    href: '/resumes',
+    color: 'from-green-500 to-green-600',
+    bg: 'bg-green-50',
+    border: 'border-green-100',
+  },
+  {
+    emoji: '✉️',
+    title: 'Cover Letter',
+    desc: 'Generate a personalised, ATS-optimised cover letter in seconds',
+    href: '/resumes',
+    color: 'from-pink-500 to-pink-600',
+    bg: 'bg-pink-50',
+    border: 'border-pink-100',
+  },
+  {
+    emoji: '💼',
+    title: 'Job Tracker',
+    desc: 'Track every application — saved, applied, interview, offer, rejected',
+    href: '/tracker',
+    color: 'from-teal-500 to-teal-600',
+    bg: 'bg-teal-50',
+    border: 'border-teal-100',
+  },
+  {
+    emoji: '⬇️',
+    title: 'Download PDF',
+    desc: 'Export your resume in beautiful templates — Harvard, Modern, Classic & more',
+    href: '/resumes',
+    color: 'from-red-500 to-red-600',
+    bg: 'bg-red-50',
+    border: 'border-red-100',
+  },
+  {
+    emoji: '⚙️',
+    title: 'Settings',
+    desc: 'Manage your profile, API keys and preferences',
+    href: '/settings',
+    color: 'from-gray-500 to-gray-600',
+    bg: 'bg-gray-50',
+    border: 'border-gray-100',
+  },
+];
 
-function ATSBadge({ score }: { score: number }) {
-  const color =
-    score >= 75 ? 'bg-green-100 text-green-800' :
-    score >= 50 ? 'bg-yellow-100 text-yellow-800' :
-    'bg-red-100 text-red-800';
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${color}`}>
-      {score ?? '—'}
-    </span>
-  );
-}
-
-function AddJobModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [jobTitle, setJobTitle] = useState('');
-  const [company, setCompany] = useState('');
-  const [jobUrl, setJobUrl] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    await fetch('/api/jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobTitle, company, jobUrl, jobDescription }),
-    });
-    setSaving(false);
-    onSaved();
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Add New Job</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-            <input required value={jobTitle} onChange={e => setJobTitle(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-            <input required value={company} onChange={e => setCompany(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job URL</label>
-            <input value={jobUrl} onChange={e => setJobUrl(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
-            <textarea rows={4} value={jobDescription} onChange={e => setJobDescription(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50">
-              {saving ? 'Saving…' : 'Save Job'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+const STEPS = [
+  { emoji: '1️⃣', text: 'Upload your resume' },
+  { emoji: '2️⃣', text: 'Paste a job description' },
+  { emoji: '3️⃣', text: 'Get AI-tailored resume + ATS score' },
+  { emoji: '4️⃣', text: 'Generate cover letter' },
+  { emoji: '5️⃣', text: 'Download PDF in your template' },
+];
 
 export default function DashboardPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const { user } = useUser();
+  const [stats, setStats] = useState({ resumes: 0, applications: 0 });
 
-  async function fetchApplications() {
-    const res = await fetch('/api/jobs');
-    const data = await res.json();
-    setApplications(data.applications ?? []);
-    setLoading(false);
-  }
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => setStats(d)).catch(() => {});
+  }, []);
 
-  useEffect(() => { fetchApplications(); }, []);
-
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this application?')) return;
-    await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
-    fetchApplications();
-  }
-
-  async function handleStatusChange(id: string, status: string) {
-    await fetch('/api/jobs', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status }),
-    });
-    fetchApplications();
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-      </div>
-    );
-  }
+  const firstName = user?.firstName ?? 'there';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? '🌅 Good morning' : hour < 17 ? '☀️ Good afternoon' : '🌙 Good evening';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Job Applications</h1>
-            <p className="text-sm text-gray-500 mt-1">Track your tailored applications</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
+
+        {/* Hero greeting */}
+        <div className="text-center space-y-3 py-6">
+          <div className="text-4xl">🚀</div>
+          <h1 className="text-3xl font-extrabold text-gray-900">{greeting}, {firstName}!</h1>
+          <p className="text-gray-500 text-base max-w-xl mx-auto">
+            Your AI-powered career toolkit. Land more interviews with perfectly tailored resumes.
+          </p>
+
+          {/* Quick stats */}
+          <div className="flex justify-center gap-6 pt-2">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-3 text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.resumes}</div>
+              <div className="text-xs text-gray-400 font-medium">Resumes</div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-3 text-center">
+              <div className="text-2xl font-bold text-orange-500">{stats.applications}</div>
+              <div className="text-xs text-gray-400 font-medium">Applications</div>
+            </div>
           </div>
-          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
-            + Add New Job
-          </button>
         </div>
 
-        {applications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="text-5xl mb-4">📋</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No jobs saved yet</h2>
-            <p className="text-gray-500">Go to any job page and click the extension to start, or add one manually above.</p>
+        {/* Quick start banner */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 text-white flex items-center justify-between gap-6 flex-wrap shadow-lg">
+          <div>
+            <div className="text-lg font-bold mb-1">✨ Quick Start</div>
+            <p className="text-blue-100 text-sm">Upload your resume to get started in under 2 minutes</p>
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  {['Job Title', 'Company', 'ATS Score', 'Date', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {applications.map(app => (
-                  <tr key={app.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900">{app.job_title}</td>
-                    <td className="px-6 py-4 text-gray-600">{app.company}</td>
-                    <td className="px-6 py-4"><ATSBadge score={app.ats_score} /></td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(app.created_at).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">
-                      <select value={app.status} onChange={e => handleStatusChange(app.id, e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                        <option value="saved">Saved</option>
-                        <option value="applied">Applied</option>
-                        <option value="interview">Interview</option>
-                        <option value="offer">Offer</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button onClick={() => handleDelete(app.id)} className="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <Link href="/resume/new" className="bg-white text-blue-600 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors text-sm whitespace-nowrap">
+            📄 Upload Resume →
+          </Link>
+        </div>
+
+        {/* Feature grid */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">🛠️ What do you want to do?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {FEATURES.map((f, i) => (
+              <Link key={i} href={f.href} className={`group rounded-2xl border ${f.border} ${f.bg} p-5 hover:shadow-md transition-all hover:-translate-y-0.5`}>
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center text-xl mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
+                  {f.emoji}
+                </div>
+                <div className="font-semibold text-gray-900 text-sm mb-1">{f.title}</div>
+                <div className="text-xs text-gray-500 leading-relaxed">{f.desc}</div>
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* How it works */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">⚡ How it works</h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {STEPS.map((s, i) => (
+              <div key={i} className="flex-1 flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+                <span className="text-lg">{s.emoji}</span>
+                <span className="text-xs text-gray-600 font-medium leading-relaxed">{s.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-400 pb-4">
+          Built with ❤️ using Next.js · Supabase · NVIDIA NIM · Clerk
+        </div>
       </div>
-      {showModal && <AddJobModal onClose={() => setShowModal(false)} onSaved={fetchApplications} />}
     </div>
   );
 }

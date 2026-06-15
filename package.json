@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.0.0",
+    "@clerk/nextjs": "^5.7.0",
     "@react-pdf/renderer": "^3.4.0",
     "@supabase/supabase-js": "^2.43.0",
     "mammoth": "^1.7.0",

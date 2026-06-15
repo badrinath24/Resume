@@ -1,7 +1,9 @@
+export const maxDuration = 120;
+
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { getAIClient, getUserApiKey, DEFAULT_MODEL, FALLBACK_KEY } from '@/lib/nvidia';
+import { getUserApiKey, FALLBACK_KEY } from '@/lib/nvidia';
 import { getResumeParserPrompt } from '@/lib/prompts';
 
 export async function POST(req: NextRequest) {
@@ -25,20 +27,41 @@ export async function POST(req: NextRequest) {
   }
 
   const warning = rawText.length < 200;
+  const truncated = rawText.slice(0, 8000);
   const userKey = await getUserApiKey(userId);
-  const client = getAIClient(userKey ?? FALLBACK_KEY ?? '');
+  const apiKey = userKey ?? FALLBACK_KEY ?? '';
 
-  const completion = await client.chat.completions.create({
-    model: DEFAULT_MODEL,
-    messages: [{ role: 'user', content: getResumeParserPrompt(rawText) }],
-    temperature: 0.1,
-    max_tokens: 4096,
+  const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'qwen/qwen3-next-80b-a3b-instruct',
+      messages: [{ role: 'user', content: getResumeParserPrompt(truncated) }],
+      temperature: 0.1,
+      max_tokens: 2000,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(90000),
   });
 
+  if (!nvidiaRes.ok) {
+    const errText = await nvidiaRes.text();
+    console.error('NVIDIA error:', nvidiaRes.status, errText);
+    return NextResponse.json({ error: `AI error: ${nvidiaRes.status}` }, { status: 500 });
+  }
+
+  const nvidiaJson = await nvidiaRes.json();
+  const raw = nvidiaJson.choices?.[0]?.message?.content ?? '{}';
+  console.log('NVIDIA raw (first 200):', raw.slice(0, 200));
+
   let parsedData: any = {};
-  try { parsedData = JSON.parse(completion.choices[0]?.message?.content ?? '{}'); } catch { parsedData = {}; }
+  try { parsedData = JSON.parse(raw.trim()); } catch { parsedData = {}; }
 
   const supabase = createServerClient();
+
+  // Ensure user row exists (Clerk webhook may not have fired yet)
+  await supabase.from('users').upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true });
+
   const { data, error } = await supabase.from('resumes').insert({
     user_id: userId,
     title,

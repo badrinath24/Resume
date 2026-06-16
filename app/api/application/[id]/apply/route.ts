@@ -2,15 +2,16 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { id } = await params;
   const { acceptedChanges, liveScore } = await req.json();
   const supabase = createServerClient();
 
   // Get application + tailored resume
-  const { data: app } = await supabase.from('applications').select('*').eq('id', params.id).single();
+  const { data: app } = await supabase.from('applications').select('*').eq('id', id).single();
   if (!app) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const { data: resume } = await supabase.from('resumes').select('*').eq('id', app.tailored_resume_id).single();
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   // Update tailored resume and application ATS score
   await supabase.from('resumes').update({ summary, experience, skills, education }).eq('id', app.tailored_resume_id);
-  await supabase.from('applications').update({ ats_score: liveScore, score_breakdown: acceptedChanges }).eq('id', params.id);
+  await supabase.from('applications').update({ ats_score: liveScore, score_breakdown: acceptedChanges }).eq('id', id);
 
   return NextResponse.json({ ok: true });
 }

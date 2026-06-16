@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'meta/llama-3.3-70b-instruct',
+      model: 'qwen/qwen3-next-80b-a3b-instruct',
       messages: [{ role: 'user', content: getResumeParserPrompt(truncated) }],
       temperature: 0.1,
       max_tokens: 2000,

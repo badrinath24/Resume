@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'meta/llama-3.1-8b-instruct',
+      model: 'qwen/qwen3-235b-a22b-instruct-fp8',
       messages: [{ role: 'user', content: getResumeParserPrompt(truncated) }],
       temperature: 0.1,
       max_tokens: 2000,
@@ -52,10 +52,19 @@ export async function POST(req: NextRequest) {
 
   const nvidiaJson = await nvidiaRes.json();
   const raw = nvidiaJson.choices?.[0]?.message?.content ?? '{}';
-  console.log('NVIDIA raw (first 200):', raw.slice(0, 200));
 
   let parsedData: any = {};
-  try { parsedData = JSON.parse(raw.trim()); } catch { parsedData = {}; }
+  try {
+    // Strip markdown code fences if model wrapped the JSON
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    parsedData = JSON.parse(cleaned);
+  } catch {
+    // Try extracting JSON object with regex fallback
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { parsedData = JSON.parse(match[0]); } catch { parsedData = {}; }
+    }
+  }
 
   const supabase = createServerClient();
 

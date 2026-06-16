@@ -29,6 +29,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     skills: body.skills,
     certifications: body.certifications,
     languages: body.languages,
+    projects: body.projects ?? [],
+    achievements: body.achievements ?? [],
+    volunteer: body.volunteer ?? [],
+    publications: body.publications ?? [],
+    awards: body.awards ?? [],
+    interests: body.interests ?? [],
     updated_at: new Date().toISOString(),
   }).eq('id', id);
 

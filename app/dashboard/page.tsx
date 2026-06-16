@@ -10,18 +10,18 @@ const FEATURES = [
     title: 'Upload Resume',
     desc: 'Parse your existing resume with AI and store it in your profile',
     href: '/resume/new',
-    color: 'from-blue-500 to-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-100',
+    color: 'from-red-500 to-red-600',
+    bg: 'bg-red-50',
+    border: 'border-red-100',
   },
   {
     emoji: '🗂️',
     title: 'My Resumes',
     desc: 'View and edit all your uploaded and tailored resumes',
     href: '/resumes',
-    color: 'from-violet-500 to-violet-600',
-    bg: 'bg-violet-50',
-    border: 'border-violet-100',
+    color: 'from-red-400 to-red-500',
+    bg: 'bg-red-50',
+    border: 'border-red-100',
   },
   {
     emoji: '🎯',
@@ -55,9 +55,9 @@ const FEATURES = [
     title: 'Job Tracker',
     desc: 'Track every application — saved, applied, interview, offer, rejected',
     href: '/tracker',
-    color: 'from-teal-500 to-teal-600',
-    bg: 'bg-teal-50',
-    border: 'border-teal-100',
+    color: 'from-red-500 to-red-600',
+    bg: 'bg-red-50',
+    border: 'border-red-100',
   },
   {
     emoji: '⬇️',
@@ -100,7 +100,7 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? '🌅 Good morning' : hour < 17 ? '☀️ Good afternoon' : '🌙 Good evening';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-50">
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
 
         {/* Hero greeting */}
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           {/* Quick stats */}
           <div className="flex justify-center gap-6 pt-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-3 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.resumes}</div>
+              <div className="text-2xl font-bold text-red-600">{stats.resumes}</div>
               <div className="text-xs text-gray-400 font-medium">Resumes</div>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-3 text-center">
@@ -125,12 +125,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick start banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 text-white flex items-center justify-between gap-6 flex-wrap shadow-lg">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl p-6 text-white flex items-center justify-between gap-6 flex-wrap shadow-lg">
           <div>
             <div className="text-lg font-bold mb-1">✨ Quick Start</div>
-            <p className="text-blue-100 text-sm">Upload your resume to get started in under 2 minutes</p>
+            <p className="text-red-100 text-sm">Upload your resume to get started in under 2 minutes</p>
           </div>
-          <Link href="/resume/new" className="bg-white text-blue-600 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors text-sm whitespace-nowrap">
+          <Link href="/resume/new" className="bg-white text-red-600 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-colors text-sm whitespace-nowrap">
             📄 Upload Resume →
           </Link>
         </div>

@@ -1,23 +1,10 @@
-import OpenAI from 'openai';
 import { createServerClient } from './supabase';
-
-export const DEFAULT_MODEL = 'meta/llama-3.1-70b-instruct';
 
 // PARSE_KEY — used for resume parsing and job description parsing (read/extract tasks)
 export const PARSE_KEY = process.env.NVIDIA_API_KEY ?? process.env.NVIDIA_FALLBACK_KEY ?? '';
 
 // WRITE_KEY — used for tailoring, cover letter, ATS scoring (generation tasks)
 export const WRITE_KEY = process.env.NVIDIA_FALLBACK_KEY ?? process.env.NVIDIA_API_KEY ?? '';
-
-// Keep FALLBACK_KEY for backwards compatibility
-export const FALLBACK_KEY = WRITE_KEY;
-
-export function getAIClient(apiKey: string) {
-  return new OpenAI({
-    baseURL: 'https://integrate.api.nvidia.com/v1',
-    apiKey,
-  });
-}
 
 export async function getUserApiKey(userId: string): Promise<string | null> {
   const supabase = createServerClient();

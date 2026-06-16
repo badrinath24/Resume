@@ -1,4 +1,4 @@
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
@@ -35,13 +35,13 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'qwen/qwen3-next-80b-a3b-instruct',  // fast sparse MoE — best for extraction
+      model: 'meta/llama-3.1-8b-instruct',
       messages: [{ role: 'user', content: getResumeParserPrompt(truncated) }],
       temperature: 0.1,
       max_tokens: 2000,
       stream: false,
     }),
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(52000),
   });
 
   if (!nvidiaRes.ok) {
@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
     skills: parsedData.skills ?? [],
     certifications: parsedData.certifications ?? [],
     languages: parsedData.languages ?? [],
+    projects: parsedData.projects ?? [],
+    achievements: parsedData.achievements ?? [],
+    volunteer: parsedData.volunteer ?? [],
+    publications: parsedData.publications ?? [],
+    awards: parsedData.awards ?? [],
+    interests: parsedData.interests ?? [],
     is_master: true,
   }).select('id').single();
 

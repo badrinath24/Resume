@@ -10,6 +10,9 @@ const emptyEdu = (): ResumeEducation => ({ school: '', degree: '', startDate: ''
 const emptySkill = (): ResumeSkillGroup => ({ category: '', items: [] });
 const emptyCert = (): ResumeCertification => ({ name: '', issuer: '', date: '', url: '' });
 const emptyLang = (): ResumeLanguage => ({ language: '', proficiency: '' });
+const emptyProject = () => ({ name: '', description: '', tech: [], url: '', startDate: '', endDate: '', bullets: [''] });
+const emptyVolunteer = () => ({ organisation: '', role: '', startDate: '', endDate: '', bullets: [''] });
+const emptyPublication = () => ({ title: '', journal: '', date: '', url: '' });
 
 function Input({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
@@ -70,7 +73,7 @@ export default function EditResumePage() {
 
         {/* Action bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link href={`/applications/new?resumeId=${id}`} className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700">
+          <Link href={`/applications/new?resumeId=${id}`} className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700">
             🎯 Tailor for a Job
           </Link>
           <Link href={`/resume/${id}/ats`} className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white text-sm font-semibold rounded-xl hover:bg-purple-700">
@@ -181,6 +184,94 @@ export default function EditResumePage() {
               <Input label="Proficiency" value={lang.proficiency} onChange={v => update(['languages', String(i), 'proficiency'], v)} />
             </div>
           ))}
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Projects</h2>
+            <button onClick={() => update(['projects'], [...((resume as any).projects ?? []), emptyProject()])} className="text-sm text-green-600 font-medium hover:underline">+ Add</button>
+          </div>
+          {((resume as any).projects ?? []).map((proj: any, i: number) => (
+            <div key={i} className="border border-gray-100 rounded-xl p-4 mb-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Project Name" value={proj.name} onChange={v => update(['projects', String(i), 'name'], v)} />
+                <Input label="URL" value={proj.url} onChange={v => update(['projects', String(i), 'url'], v)} />
+                <Input label="Start Date" value={proj.startDate} onChange={v => update(['projects', String(i), 'startDate'], v)} />
+                <Input label="End Date" value={proj.endDate} onChange={v => update(['projects', String(i), 'endDate'], v)} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                <input value={proj.description} onChange={e => update(['projects', String(i), 'description'], e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Technologies (comma-separated)</label>
+                <input value={(proj.tech ?? []).join(', ')} onChange={e => update(['projects', String(i), 'tech'], e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Bullets</label>
+                {(proj.bullets ?? []).map((b: string, j: number) => (
+                  <input key={j} value={b} onChange={e => { const bullets = [...proj.bullets]; bullets[j] = e.target.value; update(['projects', String(i), 'bullets'], bullets); }} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm mb-1 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                ))}
+                <button onClick={() => update(['projects', String(i), 'bullets'], [...(proj.bullets ?? []), ''])} className="text-xs text-green-600 hover:underline">+ Add bullet</button>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Volunteer Experience</h2>
+            <button onClick={() => update(['volunteer'], [...((resume as any).volunteer ?? []), emptyVolunteer()])} className="text-sm text-green-600 font-medium hover:underline">+ Add</button>
+          </div>
+          {((resume as any).volunteer ?? []).map((v: any, i: number) => (
+            <div key={i} className="border border-gray-100 rounded-xl p-4 mb-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Organisation" value={v.organisation} onChange={val => update(['volunteer', String(i), 'organisation'], val)} />
+                <Input label="Role" value={v.role} onChange={val => update(['volunteer', String(i), 'role'], val)} />
+                <Input label="Start Date" value={v.startDate} onChange={val => update(['volunteer', String(i), 'startDate'], val)} />
+                <Input label="End Date" value={v.endDate} onChange={val => update(['volunteer', String(i), 'endDate'], val)} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Bullets</label>
+                {(v.bullets ?? []).map((b: string, j: number) => (
+                  <input key={j} value={b} onChange={e => { const bullets = [...v.bullets]; bullets[j] = e.target.value; update(['volunteer', String(i), 'bullets'], bullets); }} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm mb-1 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                ))}
+                <button onClick={() => update(['volunteer', String(i), 'bullets'], [...(v.bullets ?? []), ''])} className="text-xs text-green-600 hover:underline">+ Add bullet</button>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Publications</h2>
+            <button onClick={() => update(['publications'], [...((resume as any).publications ?? []), emptyPublication()])} className="text-sm text-green-600 font-medium hover:underline">+ Add</button>
+          </div>
+          {((resume as any).publications ?? []).map((pub: any, i: number) => (
+            <div key={i} className="border border-gray-100 rounded-xl p-4 mb-4 grid grid-cols-2 gap-3">
+              <Input label="Title" value={pub.title} onChange={v => update(['publications', String(i), 'title'], v)} />
+              <Input label="Journal / Venue" value={pub.journal} onChange={v => update(['publications', String(i), 'journal'], v)} />
+              <Input label="Date" value={pub.date} onChange={v => update(['publications', String(i), 'date'], v)} />
+              <Input label="URL / DOI" value={pub.url} onChange={v => update(['publications', String(i), 'url'], v)} />
+            </div>
+          ))}
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Achievements & Awards</h2>
+          <p className="text-xs text-gray-400 mb-3">One achievement per line</p>
+          {[...((resume as any).achievements ?? []), ...((resume as any).awards ?? [])].map((a: string, i: number) => (
+            <input key={i} value={typeof a === 'string' ? a : ''} onChange={e => { const arr = [...((resume as any).achievements ?? [])]; arr[i] = e.target.value; update(['achievements'], arr); }} className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-green-500" />
+          ))}
+          <button onClick={() => update(['achievements'], [...((resume as any).achievements ?? []), ''])} className="text-xs text-green-600 hover:underline">+ Add achievement</button>
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Interests</h2>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Interests (comma-separated)</label>
+            <input value={((resume as any).interests ?? []).join(', ')} onChange={e => update(['interests'], e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+          </div>
         </section>
 
         <div className="pb-10">

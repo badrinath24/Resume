@@ -45,11 +45,11 @@ export default function NewApplicationPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Job Title <span className="text-gray-400">(optional — auto-detected)</span></label>
-              <input value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g. Senior Software Engineer" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g. Senior Software Engineer" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Company <span className="text-gray-400">(optional — auto-detected)</span></label>
-              <input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g. Google" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g. Google" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Job Description *</label>
@@ -58,7 +58,7 @@ export default function NewApplicationPage() {
                 onChange={e => setJobDescription(e.target.value)}
                 rows={12}
                 placeholder="Paste the full job description here..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
               />
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function NewApplicationPage() {
               <div className="flex gap-3">
                 {(['LOW', 'MEDIUM', 'HIGH'] as const).map(lvl => (
                   <button key={lvl} type="button" onClick={() => setTailoringLevel(lvl)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${tailoringLevel === lvl ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'}`}>
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${tailoringLevel === lvl ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-400'}`}>
                     {lvl === 'LOW' ? '🟡 Low' : lvl === 'MEDIUM' ? '🟠 Medium' : '🔴 High'}
                   </button>
                 ))}
@@ -79,7 +79,7 @@ export default function NewApplicationPage() {
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <button type="submit" disabled={loading} className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+          <button type="submit" disabled={loading} className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />}
             {loading ? 'Tailoring Resume… (this takes ~30 seconds)' : '🎯 Tailor My Resume'}
           </button>

@@ -1,4 +1,4 @@
-export const maxDuration = 180;
+export const maxDuration = 60;
 
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,7 +20,7 @@ async function callNvidia(prompt: string, model: string, maxTokens = 3000): Prom
       max_tokens: maxTokens,
       stream: false,
     }),
-    signal: AbortSignal.timeout(55000),
+    signal: AbortSignal.timeout(model === FAST_MODEL ? 20000 : 35000),
   });
   if (!res.ok) throw new Error(`NVIDIA ${res.status}: ${await res.text()}`);
   const json = await res.json();
@@ -53,6 +53,12 @@ export async function POST(req: NextRequest) {
     skills: resume.skills,
     certifications: resume.certifications,
     languages: resume.languages,
+    projects: resume.projects ?? [],
+    achievements: resume.achievements ?? [],
+    volunteer: resume.volunteer ?? [],
+    publications: resume.publications ?? [],
+    awards: resume.awards ?? [],
+    interests: resume.interests ?? [],
   });
   const tailorRaw = await callNvidia(getTailoringPrompt(resumeJson, JSON.stringify(jobData), tailoringLevel), SMART_MODEL, 4000);
   let tailorData: any = {};
@@ -71,6 +77,12 @@ export async function POST(req: NextRequest) {
     skills: tailorData.tailoredResume?.skills ?? resume.skills,
     certifications: tailorData.tailoredResume?.certifications ?? resume.certifications,
     languages: tailorData.tailoredResume?.languages ?? resume.languages,
+    projects: resume.projects ?? [],
+    achievements: resume.achievements ?? [],
+    volunteer: resume.volunteer ?? [],
+    publications: resume.publications ?? [],
+    awards: resume.awards ?? [],
+    interests: resume.interests ?? [],
     is_master: false,
   }).select('id').single();
 

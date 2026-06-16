@@ -33,7 +33,7 @@ export default function ApplicationResultPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
     </div>
   );
 
@@ -102,7 +102,7 @@ export default function ApplicationResultPage() {
           <button onClick={() => toggleAll(false)} className="px-4 py-2 text-sm font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
             ✗ Reject All
           </button>
-          <button onClick={handleSaveChanges} disabled={saving} className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 ml-auto">
+          <button onClick={handleSaveChanges} disabled={saving} className="px-4 py-2 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 ml-auto">
             {saving && <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />}
             {saving ? 'Saving…' : '💾 Save Accepted Changes'}
           </button>
@@ -142,7 +142,7 @@ export default function ApplicationResultPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">{change.section}</span>
+                        <span className="text-xs font-bold text-red-600 uppercase tracking-wide">{change.section}</span>
                         <span className="text-xs text-green-600 font-semibold">+{change.scoreImpact ?? 0} pts</span>
                         {isAccepted
                           ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Accepted</span>

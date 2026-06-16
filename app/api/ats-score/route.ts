@@ -1,7 +1,9 @@
+export const maxDuration = 60;
+
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { getAIClient, getUserApiKey, DEFAULT_MODEL, FALLBACK_KEY } from '@/lib/nvidia';
+import { WRITE_KEY } from '@/lib/nvidia';
 import { getATSScorePrompt } from '@/lib/prompts';
 
 export async function POST(req: NextRequest) {
@@ -15,19 +17,31 @@ export async function POST(req: NextRequest) {
   const { data: row } = await supabase.from('resumes').select('*').eq('id', resumeId).eq('user_id', userId).single();
   if (!row) return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
 
-  const userKey = await getUserApiKey(userId);
-  const client = getAIClient(userKey ?? FALLBACK_KEY ?? '');
-  const resumeJson = JSON.stringify({ personal: row.personal_info, summary: row.summary, experience: row.experience, education: row.education, skills: row.skills });
+  const resumeJson = JSON.stringify(row.parsed_data ?? {});
 
-  const completion = await client.chat.completions.create({
-    model: DEFAULT_MODEL,
-    messages: [{ role: 'user', content: getATSScorePrompt(resumeJson, jobDescription) }],
-    temperature: 0.1,
-    max_tokens: 4096,
+  const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_KEY}` },
+    body: JSON.stringify({
+      model: 'meta/llama-3.3-70b-instruct',
+      messages: [{ role: 'user', content: getATSScorePrompt(resumeJson, jobDescription) }],
+      temperature: 0.1,
+      max_tokens: 2000,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(50000),
   });
 
+  if (!nvidiaRes.ok) return NextResponse.json({ error: `AI error: ${await nvidiaRes.text()}` }, { status: 500 });
+
+  const json = await nvidiaRes.json();
+  const raw = json.choices?.[0]?.message?.content ?? '{}';
+
   let breakdown: any = {};
-  try { breakdown = JSON.parse(completion.choices[0]?.message?.content ?? '{}'); } catch { breakdown = {}; }
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    breakdown = JSON.parse(match ? match[0] : raw);
+  } catch { breakdown = {}; }
 
   return NextResponse.json({ breakdown });
 }

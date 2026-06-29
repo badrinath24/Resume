@@ -3,7 +3,7 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { WRITE_KEY } from '@/lib/nvidia';
+import { getUserKeys, getWriteKey, callAI, extractJSON } from '@/lib/ai';
 import { getATSScorePrompt } from '@/lib/prompts';
 
 export async function POST(req: NextRequest) {
@@ -13,35 +13,29 @@ export async function POST(req: NextRequest) {
   const { resumeId, jobDescription } = await req.json();
   if (!resumeId || !jobDescription) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
 
+  const keys = await getUserKeys(userId);
+  const keyInfo = getWriteKey(keys);
+  if (!keyInfo) return NextResponse.json({ error: 'No API key configured. Add your key in Settings.' }, { status: 400 });
+
   const supabase = createServerClient();
   const { data: row } = await supabase.from('resumes').select('*').eq('id', resumeId).eq('user_id', userId).single();
   if (!row) return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
 
-  const resumeJson = JSON.stringify(row.parsed_data ?? {});
-
-  const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_KEY}` },
-    body: JSON.stringify({
-      model: 'meta/llama-3.3-70b-instruct',
-      messages: [{ role: 'user', content: getATSScorePrompt(resumeJson, jobDescription) }],
-      temperature: 0.1,
-      max_tokens: 2000,
-      stream: false,
-    }),
-    signal: AbortSignal.timeout(50000),
+  const resumeJson = JSON.stringify({
+    personal: row.personal_info,
+    summary: row.summary,
+    experience: row.experience,
+    education: row.education,
+    skills: row.skills,
   });
 
-  if (!nvidiaRes.ok) return NextResponse.json({ error: `AI error: ${await nvidiaRes.text()}` }, { status: 500 });
+  const raw = await callAI(keyInfo, getATSScorePrompt(resumeJson, jobDescription), {
+    temperature: 0.1,
+    maxTokens: 2000,
+    timeoutMs: 50000,
+    isWriting: true,
+  });
 
-  const json = await nvidiaRes.json();
-  const raw = json.choices?.[0]?.message?.content ?? '{}';
-
-  let breakdown: any = {};
-  try {
-    const match = raw.match(/\{[\s\S]*\}/);
-    breakdown = JSON.parse(match ? match[0] : raw);
-  } catch { breakdown = {}; }
-
+  const breakdown = extractJSON(raw);
   return NextResponse.json({ breakdown });
 }

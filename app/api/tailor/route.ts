@@ -3,29 +3,8 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { PARSE_KEY, WRITE_KEY } from '@/lib/nvidia';
+import { getUserKeys, getParseKey, getWriteKey, callAI, extractJSON } from '@/lib/ai';
 import { getJobParserPrompt, getTailoringPrompt } from '@/lib/prompts';
-
-const FAST_MODEL = 'qwen/qwen3-next-80b-a3b-instruct';   // parsing — fast sparse MoE
-const SMART_MODEL = 'meta/llama-3.3-70b-instruct';        // writing — best Llama for generation
-
-async function callNvidia(prompt: string, model: string, maxTokens = 3000): Promise<string> {
-  const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${model === FAST_MODEL ? PARSE_KEY : WRITE_KEY}` },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: maxTokens,
-      stream: false,
-    }),
-    signal: AbortSignal.timeout(model === FAST_MODEL ? 20000 : 35000),
-  });
-  if (!res.ok) throw new Error(`NVIDIA ${res.status}: ${await res.text()}`);
-  const json = await res.json();
-  return json.choices?.[0]?.message?.content ?? '{}';
-}
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -34,17 +13,26 @@ export async function POST(req: NextRequest) {
   const { resumeId, jobDescription, jobTitle, company, tailoringLevel = 'MEDIUM' } = await req.json();
   if (!resumeId || !jobDescription) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
+  const keys = await getUserKeys(userId);
+  const parseKey = getParseKey(keys);
+  const writeKey = getWriteKey(keys);
+  if (!parseKey || !writeKey) return NextResponse.json({ error: 'No API key configured. Add your key in Settings.' }, { status: 400 });
+
   const supabase = createServerClient();
   const { data: resume, error: resumeErr } = await supabase
     .from('resumes').select('*').eq('id', resumeId).single();
   if (resumeErr || !resume) return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
 
-  // Step 1: Parse job description (fast model, small output)
-  const jobRaw = await callNvidia(getJobParserPrompt(jobDescription.slice(0, 4000)), FAST_MODEL, 1500);
-  let jobData: any = {};
-  try { jobData = JSON.parse(jobRaw.trim()); } catch { jobData = { jobTitle, company, keywords: [] }; }
+  // Step 1: Parse job description
+  const jobRaw = await callAI(parseKey, getJobParserPrompt(jobDescription.slice(0, 4000)), {
+    temperature: 0.1,
+    maxTokens: 1000,
+    timeoutMs: 25000,
+  });
+  let jobData: any = extractJSON(jobRaw);
+  if (!jobData?.jobTitle) jobData = { jobTitle, company, keywords: [] };
 
-  // Step 2: Tailor resume (smart model)
+  // Step 2: Tailor resume
   const resumeJson = JSON.stringify({
     personal: resume.personal_info,
     summary: resume.summary,
@@ -60,9 +48,13 @@ export async function POST(req: NextRequest) {
     awards: resume.awards ?? [],
     interests: resume.interests ?? [],
   });
-  const tailorRaw = await callNvidia(getTailoringPrompt(resumeJson, JSON.stringify(jobData), tailoringLevel), SMART_MODEL, 4000);
-  let tailorData: any = {};
-  try { tailorData = JSON.parse(tailorRaw.trim()); } catch { tailorData = {}; }
+  const tailorRaw = await callAI(writeKey, getTailoringPrompt(resumeJson, JSON.stringify(jobData), tailoringLevel), {
+    temperature: 0.2,
+    maxTokens: 4000,
+    timeoutMs: 50000,
+    isWriting: true,
+  });
+  const tailorData: any = extractJSON(tailorRaw);
 
   await supabase.from('users').upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true });
 
@@ -77,8 +69,8 @@ export async function POST(req: NextRequest) {
     skills: tailorData.tailoredResume?.skills ?? resume.skills,
     certifications: tailorData.tailoredResume?.certifications ?? resume.certifications,
     languages: tailorData.tailoredResume?.languages ?? resume.languages,
-    projects: resume.projects ?? [],
-    achievements: resume.achievements ?? [],
+    projects: tailorData.tailoredResume?.projects ?? resume.projects ?? [],
+    achievements: tailorData.tailoredResume?.achievements ?? resume.achievements ?? [],
     volunteer: resume.volunteer ?? [],
     publications: resume.publications ?? [],
     awards: resume.awards ?? [],

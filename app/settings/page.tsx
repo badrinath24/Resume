@@ -4,45 +4,55 @@ import { useEffect, useState } from 'react';
 
 const API_KEYS = [
   {
-    id: 'nvidia_api_key',
-    label: 'NVIDIA Parse Key',
-    desc: 'Resume parsing — Qwen3 model',
-    placeholder: 'nvapi-••••••••••••••••••••••',
-    link: 'https://build.nvidia.com',
-    linkLabel: 'Get at build.nvidia.com →',
-    icon: '⚡',
-    border: 'border-green-200',
-    bg: 'bg-green-50',
-    iconBg: 'bg-green-100 text-green-700',
-  },
-  {
-    id: 'nvidia_write_key',
-    label: 'NVIDIA Write Key',
-    desc: 'Tailoring & cover letters — Llama 3.3',
-    placeholder: 'nvapi-••••••••••••••••••••••',
-    link: 'https://build.nvidia.com',
-    linkLabel: 'Get at build.nvidia.com →',
-    icon: '✍️',
-    border: 'border-blue-200',
-    bg: 'bg-blue-50',
-    iconBg: 'bg-blue-100 text-blue-700',
-  },
-  {
     id: 'openai_api_key',
     label: 'OpenAI API Key',
-    desc: 'Optional fallback AI provider',
+    model: 'gpt-4.1-mini',
+    desc: 'Used for all AI tasks — parsing, tailoring, cover letters',
     placeholder: 'sk-••••••••••••••••••••••••••',
     link: 'https://platform.openai.com/api-keys',
     linkLabel: 'Get at platform.openai.com →',
     icon: '🤖',
+    border: 'border-green-200',
+    bg: 'bg-green-50',
+    iconBg: 'bg-green-100 text-green-700',
+    badge: 'Recommended',
+    badgeColor: 'bg-green-500',
+  },
+  {
+    id: 'nvidia_api_key',
+    label: 'NVIDIA API Key',
+    model: 'meta/llama-3.1-70b-instruct',
+    desc: 'Alternative AI provider — resume parsing',
+    placeholder: 'nvapi-••••••••••••••••••••••',
+    link: 'https://build.nvidia.com',
+    linkLabel: 'Get at build.nvidia.com →',
+    icon: '⚡',
+    border: 'border-blue-200',
+    bg: 'bg-blue-50',
+    iconBg: 'bg-blue-100 text-blue-700',
+    badge: 'Alternative',
+    badgeColor: 'bg-blue-500',
+  },
+  {
+    id: 'nvidia_write_key',
+    label: 'NVIDIA Write Key',
+    model: 'meta/llama-3.3-70b-instruct',
+    desc: 'Alternative AI provider — tailoring & cover letters',
+    placeholder: 'nvapi-••••••••••••••••••••••',
+    link: 'https://build.nvidia.com',
+    linkLabel: 'Get at build.nvidia.com →',
+    icon: '✍️',
     border: 'border-purple-200',
     bg: 'bg-purple-50',
     iconBg: 'bg-purple-100 text-purple-700',
+    badge: 'Alternative',
+    badgeColor: 'bg-purple-500',
   },
   {
     id: 'groq_api_key',
     label: 'Groq API Key',
-    desc: 'Optional ultra-fast inference',
+    model: 'llama-3.3-70b-versatile',
+    desc: 'Ultra-fast inference — optional provider',
     placeholder: 'gsk_••••••••••••••••••••••••',
     link: 'https://console.groq.com/keys',
     linkLabel: 'Get at console.groq.com →',
@@ -50,6 +60,8 @@ const API_KEYS = [
     border: 'border-orange-200',
     bg: 'bg-orange-50',
     iconBg: 'bg-orange-100 text-orange-700',
+    badge: 'Optional',
+    badgeColor: 'bg-orange-400',
   },
 ];
 
@@ -96,28 +108,54 @@ export default function SettingsPage() {
     window.location.href = '/';
   }
 
+  const activeCount = Object.values(keys).filter(v => v && v.length > 5).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 py-10">
       <div className="max-w-3xl mx-auto px-6 space-y-8">
 
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">⚙️ Settings</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your API keys — stored securely in your account</p>
+          <p className="text-gray-500 text-sm mt-1">Add your API keys — the app uses whichever key you provide</p>
         </div>
 
-        {/* 4 API key cards */}
+        {/* Priority info banner */}
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+          <span className="text-xl mt-0.5">💡</span>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">How keys are used</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              OpenAI key is used for all tasks if provided. NVIDIA keys are used as alternative if you don't have OpenAI.
+              Enter any key below and save — the app will automatically pick the right model.
+            </p>
+          </div>
+        </div>
+
+        {/* API key cards */}
         <div>
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">API Keys</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">API Keys</h2>
+            {activeCount > 0 && (
+              <span className="text-xs text-green-600 font-semibold bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                {activeCount} key{activeCount > 1 ? 's' : ''} saved
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {API_KEYS.map(k => (
               <div key={k.id} className={`rounded-2xl border ${k.border} ${k.bg} p-5`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${k.iconBg} flex-shrink-0`}>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${k.iconBg} flex-shrink-0 mt-0.5`}>
                     {k.icon}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{k.label}</p>
-                    <p className="text-xs text-gray-500">{k.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-gray-900">{k.label}</p>
+                      <span className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full ${k.badgeColor}`}>
+                        {k.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{k.desc}</p>
                   </div>
                 </div>
 
@@ -138,8 +176,8 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {keys[k.id] && (
-                  <p className="text-xs text-green-600 font-medium mb-1">✓ Key saved</p>
+                {keys[k.id] && keys[k.id].length > 5 && (
+                  <p className="text-xs text-green-600 font-medium mb-1">✓ Key entered</p>
                 )}
 
                 <a href={k.link} target="_blank" rel="noopener noreferrer"
@@ -156,7 +194,7 @@ export default function SettingsPage() {
           <div>
             {saved && <p className="text-green-600 text-sm font-semibold">✓ All keys saved!</p>}
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            {!saved && !error && <p className="text-xs text-gray-400">Keys are encrypted and only used for AI calls on your behalf</p>}
+            {!saved && !error && <p className="text-xs text-gray-400">Keys are stored securely and only used for AI calls on your behalf</p>}
           </div>
           <button
             onClick={save}
